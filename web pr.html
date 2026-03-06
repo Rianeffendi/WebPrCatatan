@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Planner Rian</title>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#1f1f2e;
+color:white;
+}
+
+nav{
+background:#2b2b3c;
+padding:15px;
+display:flex;
+justify-content:center;
+gap:10px;
+flex-wrap:wrap;
+}
+
+nav button{
+background:#4c6ef5;
+border:none;
+color:white;
+padding:10px 15px;
+border-radius:8px;
+cursor:pointer;
+}
+
+nav button:hover{
+background:#364fc7;
+}
+
+.container{
+padding:20px;
+}
+
+.card{
+background:#2b2b3c;
+padding:20px;
+border-radius:12px;
+margin-bottom:20px;
+box-shadow:0 5px 15px rgba(0,0,0,0.3);
+}
+
+textarea{
+width:100%;
+height:80px;
+border-radius:8px;
+border:none;
+padding:10px;
+margin-top:10px;
+resize:vertical;
+}
+
+input{
+width:100%;
+border-radius:8px;
+border:none;
+padding:10px;
+margin-top:10px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th,td{
+border:1px solid #444;
+padding:10px;
+text-align:center;
+}
+
+th{
+background:#364fc7;
+}
+
+td{
+background:#2b2b3c;
+}
+
+#welcome{
+text-align:center;
+padding:40px;
+background:linear-gradient(135deg,#2b2b3c,#3a3a55);
+}
+
+.foto{
+width:120px;
+height:120px;
+border-radius:50%;
+border:4px solid white;
+object-fit:cover;
+}
+
+.jam{
+text-align:center;
+margin-bottom:10px;
+color:#9fa8ff;
+}
+
+.aksi button{
+margin:3px;
+padding:5px 10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.edit{
+background:orange;
+color:white;
+}
+
+.hapus{
+background:red;
+color:white;
+}
+
+.hari-aktif{
+border:2px solid #4c6ef5;
+}
+
+.notif{
+position:fixed;
+top:20px;
+right:20px;
+background:#4c6ef5;
+padding:12px 20px;
+border-radius:8px;
+display:none;
+}
+
+@media(max-width:600px){
+
+nav button{
+flex:1;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="notif" id="notif"></div>
+
+<div id="welcome">
+
+<h1>📚 Planner Mahasiswa</h1>
+
+<img src="Rian1.jpeg" class="foto">
+
+<h2>Selamat Datang Rian Dwi Efendi 👋</h2>
+
+<p>Kelola PR dan jadwal kuliahmu</p>
+
+<button onclick="masuk()">Masuk</button>
+
+</div>
+
+<div id="app" style="display:none">
+
+<nav>
+
+<button onclick="beranda()">🏠 Beranda</button>
+<button onclick="pr()">📚 PR</button>
+<button onclick="dosen()">👨‍🏫 Dosen & MK</button>
+<button onclick="arsip()">📂 Arsip</button>
+<button onclick="resetData()">🗑 Reset</button>
+
+</nav>
+
+<div class="container">
+
+<div class="jam" id="jam"></div>
+
+<div id="konten"></div>
+
+</div>
+
+</div>
+
+<script>
+
+let hari=[
+"Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"
+]
+
+function notif(teks){
+
+let n=document.getElementById("notif")
+
+n.innerHTML=teks
+n.style.display="block"
+
+setTimeout(()=>{
+n.style.display="none"
+},2000)
+
+}
+
+function masuk(){
+document.getElementById("welcome").style.display="none"
+document.getElementById("app").style.display="block"
+beranda()
+}
+
+function hitungPR(){
+
+let total=0
+
+hari.forEach(h=>{
+let data=localStorage.getItem("pr_"+h)
+if(data){
+total+=JSON.parse(data).length
+}
+})
+
+return total
+
+}
+
+function beranda(){
+
+let total=hitungPR()
+
+document.getElementById("konten").innerHTML=`
+
+<div class="card">
+
+<h2>Dashboard</h2>
+
+<p>Gunakan planner ini untuk mengatur kegiatan kuliahmu.</p>
+
+<ul>
+<li>📚 Catat PR + Catatan setiap hari</li>
+<li>👨‍🏫 Atur jadwal dosen & mata kuliah</li>
+<li>📂 Lihat arsip data</li>
+</ul>
+
+<h3>📊 Statistik</h3>
+<p>Total PR tersimpan : <b>${total}</b></p>
+
+</div>
+
+`
+
+}
+
+function pr(){
+
+let isi=""
+
+let today=new Date().toLocaleDateString('id-ID',{weekday:'long'})
+
+hari.forEach(h=>{
+
+let aktif=(h==today)?"hari-aktif":""
+
+let data=localStorage.getItem("pr_"+h)
+
+let daftar=""
+
+if(data){
+
+JSON.parse(data).forEach(d=>{
+daftar+=`<p>📌 <b>${d.mk}</b> : ${d.isi}</p>`
+})
+
+}
+
+isi+=`
+
+<div class="card ${aktif}">
+
+<h3>${h}</h3>
+
+<input id="mk_${h}" placeholder="Mata Kuliah">
+
+<textarea id="pr_${h}" placeholder="PR / Catatan"></textarea>
+
+<br><br>
+
+<button onclick="simpanPR('${h}')">Simpan</button>
+
+<div>${daftar}</div>
+
+</div>
+
+`
+
+})
+
+document.getElementById("konten").innerHTML=isi
+
+}
+
+function simpanPR(h){
+
+let mk=document.getElementById("mk_"+h).value
+let pr=document.getElementById("pr_"+h).value
+
+if(pr.trim()==""){
+notif("Isi dulu datanya")
+return
+}
+
+let tanggal=new Date().toLocaleDateString('id-ID',{
+day:'numeric',
+month:'long',
+year:'numeric'
+})
+
+let dataBaru={
+mk:mk,
+isi:pr,
+tanggal:tanggal
+}
+
+let dataLama=localStorage.getItem("pr_"+h)
+
+let daftar=[]
+
+if(dataLama){
+daftar=JSON.parse(dataLama)
+}
+
+daftar.push(dataBaru)
+
+localStorage.setItem("pr_"+h,JSON.stringify(daftar))
+
+document.getElementById("mk_"+h).value=""
+document.getElementById("pr_"+h).value=""
+
+notif("✅ Data tersimpan")
+
+pr()
+
+}
+
+function dosen(){
+
+let table=`
+
+<div class="card">
+
+<h2>Daftar Dosen & Mata Kuliah</h2>
+
+<table>
+
+<tr>
+<th>Hari</th>
+<th>Dosen</th>
+<th>Mata Kuliah</th>
+</tr>
+
+`
+
+hari.forEach(h=>{
+
+table+=`
+
+<tr>
+
+<td>${h}</td>
+
+<td>
+<textarea id="dosen_${h}" placeholder="Nama dosen"></textarea>
+</td>
+
+<td>
+<textarea id="mkdosen_${h}" placeholder="Mata kuliah"></textarea>
+</td>
+
+</tr>
+
+`
+
+})
+
+table+=`
+
+</table>
+
+<br>
+
+<button onclick="simpanDosen()">Simpan Jadwal</button>
+
+</div>
+
+`
+
+document.getElementById("konten").innerHTML=table
+
+loadDosen()
+
+}
+
+function simpanDosen(){
+
+hari.forEach(h=>{
+
+let d=document.getElementById("dosen_"+h).value
+let m=document.getElementById("mkdosen_"+h).value
+
+localStorage.setItem("dosen_"+h,d)
+localStorage.setItem("mkdosen_"+h,m)
+
+})
+
+notif("Jadwal tersimpan")
+
+}
+
+function loadDosen(){
+
+hari.forEach(h=>{
+
+let d=localStorage.getItem("dosen_"+h)
+let m=localStorage.getItem("mkdosen_"+h)
+
+if(d) document.getElementById("dosen_"+h).value=d
+if(m) document.getElementById("mkdosen_"+h).value=m
+
+})
+
+}
+
+function arsip(){
+
+let isi=`<div class="card">
+
+<h2>📂 Arsip Data</h2>
+
+<input type="text" placeholder="🔍 Cari mata kuliah..." onkeyup="cari(this.value)">
+
+<div id="hasilArsip"></div>
+
+</div>`
+
+document.getElementById("konten").innerHTML=isi
+
+tampilkanArsip()
+
+}
+
+function tampilkanArsip(filter=""){
+
+let html=""
+
+hari.forEach(h=>{
+
+let pr=localStorage.getItem("pr_"+h)
+
+if(pr){
+
+let data=JSON.parse(pr)
+
+data.forEach((d,i)=>{
+
+if(d.mk.toLowerCase().includes(filter.toLowerCase())){
+
+html+=`
+
+<p>
+
+<b>${h}</b> - <b>${d.mk}</b> : ${d.isi}
+<small>(${d.tanggal})</small>
+
+<span class="aksi">
+<button class="edit" onclick="editData('${h}',${i})">Edit</button>
+<button class="hapus" onclick="hapusData('${h}',${i})">Hapus</button>
+</span>
+
+</p>
+
+`
+
+}
+
+})
+
+}
+
+})
+
+document.getElementById("hasilArsip").innerHTML=html || "<p>Tidak ada data</p>"
+
+}
+
+function cari(kata){
+tampilkanArsip(kata)
+}
+
+function hapusData(h,i){
+
+let data=JSON.parse(localStorage.getItem("pr_"+h))
+
+data.splice(i,1)
+
+localStorage.setItem("pr_"+h,JSON.stringify(data))
+
+tampilkanArsip()
+
+}
+
+function editData(h,i){
+
+let data=JSON.parse(localStorage.getItem("pr_"+h))
+
+let mk=prompt("Edit Mata Kuliah",data[i].mk)
+let isi=prompt("Edit Catatan",data[i].isi)
+
+if(mk!=null && isi!=null){
+
+data[i].mk=mk
+data[i].isi=isi
+
+localStorage.setItem("pr_"+h,JSON.stringify(data))
+
+tampilkanArsip()
+
+}
+
+}
+
+function resetData(){
+
+if(confirm("Yakin ingin menghapus semua data?")){
+
+localStorage.clear()
+notif("Semua data dihapus")
+location.reload()
+
+}
+
+}
+
+function updateJam(){
+
+let now=new Date()
+
+document.getElementById("jam").innerHTML="⏰ "+now.toLocaleTimeString()
+
+}
+
+setInterval(updateJam,1000)
+
+</script>
+
+</body>
+</html>
